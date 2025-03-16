@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,15 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				garden: {
+					green: '#90EE90',
+					sky: '#87CEEB',
+					soil: '#8B4513',
+					leaf: '#32CD32',
+					flower: '#FF69B4',
+					water: '#1E90FF',
+					sun: '#FFD700',
 				}
 			},
 			borderRadius: {
@@ -84,11 +94,37 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'grow': {
+					'0%': {
+						transform: 'scaleY(0.8)',
+						opacity: '0.5'
+					},
+					'100%': {
+						transform: 'scaleY(1)',
+						opacity: '1'
+					}
+				},
+				'sway': {
+					'0%, 100%': {
+						transform: 'rotate(-3deg)'
+					},
+					'50%': {
+						transform: 'rotate(3deg)'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'grow': 'grow 1s ease-out forwards',
+				'sway': 'sway 4s ease-in-out infinite'
+			},
+			fontFamily: {
+				quicksand: ['Quicksand', 'sans-serif'],
+			},
+			backgroundImage: {
+				'garden-gradient': 'linear-gradient(to top, #90EE90, #87CEEB)',
 			}
 		}
 	},
