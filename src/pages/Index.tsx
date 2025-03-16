@@ -1,10 +1,12 @@
-
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { addDays, subDays, format } from 'date-fns';
 import { toast } from '@/components/ui/use-toast';
 import NavBar from '@/components/NavBar';
 import GardenView from '@/components/GardenView';
 import HabitList, { Habit } from '@/components/HabitList';
 import HabitDialog from '@/components/HabitDialog';
+import HabitCalendar, { HabitEmoji, DailyHabit } from '@/components/HabitCalendar';
 import { Button } from '@/components/ui/button';
 import { Leaf, ArrowDown } from 'lucide-react';
 
@@ -21,7 +23,7 @@ const MOCK_PLANTS = [
     id: "plant2",
     name: "Girassol",
     type: "flower" as const,
-    stage: "sprouting" as const,
+    stage: "sprout" as const,
     completed: 20
   },
   {
@@ -35,7 +37,7 @@ const MOCK_PLANTS = [
     id: "plant4",
     name: "Pinheiro",
     type: "tree" as const,
-    stage: "sprout" as const,
+    stage: "seed" as const,
     completed: 30
   }
 ];
@@ -79,11 +81,64 @@ const MOCK_HABITS: Habit[] = [
   }
 ];
 
+// Mock emoji habits for the calendar
+const MOCK_EMOJI_HABITS: HabitEmoji[] = [
+  { id: "emoji1", emoji: "🌻", name: "Meditar", streak: 5, minimumDays: 21 },
+  { id: "emoji2", emoji: "🌷", name: "Ler", streak: 3, minimumDays: 14 },
+  { id: "emoji3", emoji: "🌱", name: "Exercitar", streak: 7, minimumDays: 30 },
+  { id: "emoji4", emoji: "🍀", name: "Beber água", streak: 10, minimumDays: 60 }
+];
+
+// Generate mock daily habits data
+const generateMockDailyHabits = (): DailyHabit[] => {
+  const result: DailyHabit[] = [];
+  const today = new Date(2025, 2, 12); // March 12, 2025, as specified
+  
+  // Generate data for the last 30 days
+  for (let i = 0; i < 30; i++) {
+    const date = subDays(today, i);
+    
+    MOCK_EMOJI_HABITS.forEach(habit => {
+      // More likely to have completed habits in recent days
+      const completionChance = i < 5 ? 0.7 : i < 10 ? 0.6 : i < 20 ? 0.5 : 0.4;
+      const skipChance = 0.1;
+      
+      const random = Math.random();
+      
+      if (random < completionChance) {
+        result.push({
+          id: `${habit.id}-${format(date, 'yyyy-MM-dd')}`,
+          habitId: habit.id,
+          date: date,
+          completed: true,
+          skipped: false
+        });
+      } else if (random < completionChance + skipChance) {
+        result.push({
+          id: `${habit.id}-${format(date, 'yyyy-MM-dd')}`,
+          habitId: habit.id,
+          date: date,
+          completed: false,
+          skipped: true
+        });
+      }
+    });
+  }
+  
+  return result;
+};
+
+const MOCK_DAILY_HABITS = generateMockDailyHabits();
+
 const Index = () => {
+  const navigate = useNavigate();
   const [plants, setPlants] = useState(MOCK_PLANTS);
   const [habits, setHabits] = useState<Habit[]>(MOCK_HABITS);
+  const [emojiHabits, setEmojiHabits] = useState<HabitEmoji[]>(MOCK_EMOJI_HABITS);
+  const [dailyHabits, setDailyHabits] = useState<DailyHabit[]>(MOCK_DAILY_HABITS);
   const [selectedHabit, setSelectedHabit] = useState<Habit | null>(null);
   const [isHabitDialogOpen, setIsHabitDialogOpen] = useState(false);
+  const [currentDate, setCurrentDate] = useState<Date>(new Date(2025, 2, 12)); // March 12, 2025
   
   // Calculate the longest streak for the NavBar
   const longestStreak = Math.max(...habits.map(h => h.streak));
@@ -149,10 +204,7 @@ const Index = () => {
   };
 
   const handleAddHabit = () => {
-    toast({
-      title: "Adicionar hábito",
-      description: "Essa funcionalidade estará disponível em breve!",
-    });
+    navigate('/add-habit');
   };
 
   const handlePlantInteract = (plantId: string) => {
@@ -187,26 +239,106 @@ const Index = () => {
     });
   };
 
-  // Mock handlers for NavBar actions
-  const handleProfileClick = () => {
+  // Calendar handlers
+  const handleToggleCalendarHabit = (habitId: string, date: Date, completed: boolean) => {
+    setDailyHabits(prev => {
+      // Check if this habit already has an entry for this date
+      const existingIndex = prev.findIndex(
+        dh => dh.habitId === habitId && format(dh.date, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
+      );
+      
+      if (existingIndex >= 0) {
+        // Update existing entry
+        const updated = [...prev];
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          completed,
+          skipped: false
+        };
+        return updated;
+      } else {
+        // Add new entry
+        return [...prev, {
+          id: `${habitId}-${format(date, 'yyyy-MM-dd')}`,
+          habitId,
+          date,
+          completed,
+          skipped: false
+        }];
+      }
+    });
+    
+    // Show toast notification
     toast({
-      title: "Perfil",
+      title: completed ? "Hábito concluído!" : "Hábito desmarcado",
+      description: completed 
+        ? "Continue assim para cultivar hábitos saudáveis!" 
+        : "Você pode marcar novamente quando completar este hábito.",
+    });
+  };
+  
+  const handleSkipCalendarHabit = (habitId: string, date: Date) => {
+    setDailyHabits(prev => {
+      // Check if this habit already has an entry for this date
+      const existingIndex = prev.findIndex(
+        dh => dh.habitId === habitId && format(dh.date, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
+      );
+      
+      if (existingIndex >= 0) {
+        // Update existing entry
+        const updated = [...prev];
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          completed: false,
+          skipped: true
+        };
+        return updated;
+      } else {
+        // Add new entry
+        return [...prev, {
+          id: `${habitId}-${format(date, 'yyyy-MM-dd')}`,
+          habitId,
+          date,
+          completed: false,
+          skipped: true
+        }];
+      }
+    });
+    
+    // Show toast notification
+    toast({
+      title: "Hábito pulado",
+      description: "Não tem problema pular de vez em quando. Continue com os outros hábitos!",
+    });
+  };
+  
+  const handlePreviousWeek = () => {
+    setCurrentDate(prev => subDays(prev, 7));
+  };
+  
+  const handleNextWeek = () => {
+    setCurrentDate(prev => addDays(prev, 7));
+  };
+  
+  const handleHabitClick = (habitId: string) => {
+    // In a real app, this would navigate to habit details
+    toast({
+      title: "Detalhes do hábito",
       description: "Esta funcionalidade estará disponível em breve!",
     });
+  };
+
+  // Handler functions for NavBar actions
+  const handleProfileClick = () => {
+    navigate('/profile');
   };
 
   const handleSettingsClick = () => {
-    toast({
-      title: "Configurações",
-      description: "Esta funcionalidade estará disponível em breve!",
-    });
+    navigate('/plans');
   };
 
   const handleReportClick = () => {
-    toast({
-      title: "Relatórios",
-      description: "Esta funcionalidade estará disponível em breve!",
-    });
+    navigate('/stats');
   };
 
   return (
@@ -237,6 +369,20 @@ const Index = () => {
           </Button>
         </div>
         
+        {/* Calendar view of habits by day */}
+        <HabitCalendar
+          habits={emojiHabits}
+          dailyHabits={dailyHabits}
+          currentDate={currentDate}
+          onPreviousWeek={handlePreviousWeek}
+          onNextWeek={handleNextWeek}
+          onToggleHabit={handleToggleCalendarHabit}
+          onSkipHabit={handleSkipCalendarHabit}
+          onHabitClick={handleHabitClick}
+          onAddHabit={handleAddHabit}
+        />
+        
+        {/* List view of habits (keeping for reference) */}
         <HabitList 
           habits={habits}
           onToggleHabit={handleToggleHabit}

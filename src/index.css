@@ -36,6 +36,13 @@
     --ring: 142 72% 29%;
 
     --radius: 1rem;
+    
+    /* Garden specific colors */
+    --garden-soil: 30 59% 25%;
+    --garden-leaf: 120 61% 34%;
+    --garden-water: 199 89% 48%;
+    --garden-sun: 48 100% 50%;
+    --garden-flower: 329 100% 75%;
   }
 
   .dark {
@@ -66,6 +73,13 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 142 72% 40%;
+    
+    /* Garden specific colors - darker theme */
+    --garden-soil: 30 40% 20%;
+    --garden-leaf: 120 40% 30%;
+    --garden-water: 199 70% 40%;
+    --garden-sun: 48 80% 45%;
+    --garden-flower: 329 80% 65%;
   }
 }
 
@@ -86,4 +100,33 @@
 .garden-background {
   background: linear-gradient(to top, #90EE90, #87CEEB);
   min-height: 100vh;
+}
+
+.bg-garden-gradient {
+  background: linear-gradient(to top, rgba(144, 238, 144, 0.3), rgba(135, 206, 235, 0.5));
+}
+
+/* Animation for plant swaying */
+@keyframes sway {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(2deg); }
+  50% { transform: rotate(0deg); }
+  75% { transform: rotate(-2deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.animate-sway {
+  animation: sway 4s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+/* Animation for plant growing */
+@keyframes grow {
+  0% { transform: scaleY(0.8); opacity: 0.7; }
+  100% { transform: scaleY(1); opacity: 1; }
+}
+
+.animate-grow {
+  animation: grow 1s ease-out forwards;
+  transform-origin: bottom center;
 }
